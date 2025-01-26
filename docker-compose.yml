@@ -1,0 +1,75 @@
+services:
+  django:
+    container_name: django_app
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - main
+    volumes:
+      - ./:/home/app
+      - static-data:/home/app/vol
+    depends_on:
+      - db
+
+  db:
+    restart: always
+    container_name: postgres_db
+    image: postgres:16.6-alpine
+    networks:
+      - main
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  celery:
+    restart: always
+    container_name: celery
+    build: .
+    command: sh -c "celery -A celery_vary_academy.dj_celery -l INFO"
+    volumes:
+      - ./:/home/app
+    networks:
+      - main
+    depends_on:
+      - redis
+      - django
+
+  redis:
+    container_name: redis_docker
+    restart: always
+    image: redis:7.4-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - main
+    expose:
+      - 6379
+    command: sh -c "sysctl vm.overcommit_memory=1 && redis-server"
+
+  nginx:
+    container_name: nginx
+    restart: always
+    networks:
+      - main
+    build:
+      context: ./nginx
+    ports:
+      - "8000:8000"
+    volumes:
+      - static-data:/vol
+
+
+volumes:
+  redis_data:
+  postgres-data:
+  static-data:
+
+networks:
+  main:
