@@ -5,10 +5,11 @@ WORKDIR /home/app
 COPY . /home/app
 
 RUN adduser -D -H mg && \
-    chown -R mg:mg /home/app
+    chown -R mg:mg /home/app && \
+    chmod +x /home/app/scripts/dj_start.sh
 
 EXPOSE 8000
 
 USER mg
 
-ENTRYPOINT ["gunicorn", "celery_vary_academy.wsgi", "-b", "0.0.0.0:8000"]
+ENTRYPOINT ["/home/app/scripts/dj_start.sh"]

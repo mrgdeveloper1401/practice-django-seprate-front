@@ -8,7 +8,7 @@ services:
     networks:
       - main
     volumes:
-      - ./:/home/app
+      - .:/home/app
       - static-data:/home/app/vol
     depends_on:
       - db
@@ -34,7 +34,7 @@ services:
     build: .
     command: sh -c "celery -A celery_vary_academy.dj_celery -l INFO"
     volumes:
-      - ./:/home/app
+      - .:/home/app
     networks:
       - main
     depends_on:
