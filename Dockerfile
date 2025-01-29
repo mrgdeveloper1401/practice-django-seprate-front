@@ -8,7 +8,6 @@ RUN adduser -D -H mg && \
     chown -R mg:mg /home/app && \
     chmod +x /home/app/scripts/*
 
-
 EXPOSE 8000
 
 USER mg
