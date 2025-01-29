@@ -5,41 +5,50 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    networks:
-      - main
     volumes:
-      - .:/home/app
+      - ./:/home/app
       - static-data:/home/app/vol
     depends_on:
       - db
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - main
 
   db:
     restart: always
     container_name: postgres_db
     image: postgres:16.6-alpine
-    networks:
-      - main
     volumes:
       - postgres-data:/var/lib/postgresql/data
     expose:
       - 5432
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${POSTDB_NAME}
+      - POSTGRES_USER=${POSTDB_USER}
+      - POSTGRES_PASSWORD=${POSTDB_PASSWORD}
+    healthcheck:
+      test: ['CMD', "pg_isready", '-q', "-d", "postgres", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - main
 
   celery:
     restart: always
     container_name: celery
-    build: .
-    command: sh -c "celery -A celery_vary_academy.dj_celery -l INFO"
+    build:
+      context: .
+      dockerfile: celery_config/Dockerfile
     volumes:
-      - .:/home/app
-    networks:
-      - main
+      - ./:/home/app
     depends_on:
       - redis
-      - django
+    networks:
+      - main
 
   redis:
     container_name: redis_docker
@@ -47,24 +56,28 @@ services:
     image: redis:7.4-alpine
     volumes:
       - redis_data:/data
-    networks:
-      - main
     expose:
       - 6379
-    command: sh -c "sysctl vm.overcommit_memory=1 && redis-server"
+    networks:
+      - main
 
   nginx:
     container_name: nginx
+    depends_on:
+      - django
     restart: always
-    networks:
-      - main
     build:
       context: ./nginx
-    ports:
-      - "8000:8000"
     volumes:
       - static-data:/vol
+    networks:
+      - main
 
+#  pgadmin4:
+#    container_name: pgadmin
+#    networks:
+#      - main
+#    image: dpage/pgadmin4:2024-12-09-2
 
 volumes:
   redis_data:
@@ -73,3 +86,4 @@ volumes:
 
 networks:
   main:
+    driver: bridge

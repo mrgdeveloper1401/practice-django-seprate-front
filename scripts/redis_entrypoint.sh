@@ -1,5 +1,5 @@
 #!/bin/sh
 
-vm.overcommit_memory 1
+vm.overcommit_memory 1 && redis-server
 
 exec "$@"
